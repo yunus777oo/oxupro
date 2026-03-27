@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oxu Pro Max</title>
+    <style>
+        :root {
+            --bg: #030303;
+            --card: #0f1217;
+            --accent: #00ffaa;
+            --math: #ffe600;
+            --phys: #ff0055;
+            --lang: #00d4ff;
+            --eng: #70ff00;
+            --info: #bf00ff;
+            --text: #ffffff;
+            --warning: #ff3333;
+            --break: #ff9d00;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .container { width: 100%; max-width: 480px; }
+
+        .glass {
+            background: linear-gradient(160deg, #13171c, #080a0d);
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.03);
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        }
+
+        .warning-note {
+            background: rgba(255, 51, 51, 0.05);
+            color: var(--warning);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px dotted var(--warning);
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 15px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0.6; } }
+
+        .main-pts { 
+            font-size: 3.2rem; 
+            font-weight: 900; 
+            text-align: center; 
+            color: var(--accent);
+            text-shadow: 0 0 25px rgba(0,255,170,0.3);
+            margin: 10px 0;
+        }
+
+        .streak-fire {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--break);
+        }
+
+        .sub-card { background: rgba(255,255,255,0.02); padding: 12px; border-radius: 14px; margin-bottom: 8px; }
+        .bar-out { height: 6px; background: #111; border-radius: 10px; margin-top: 6px; overflow: hidden; }
+        .bar-in { height: 100%; transition: width 0.8s ease; width: 0; }
+
+        .pulse-box {
+            width: 150px; height: 150px; border: 4px solid var(--accent);
+            border-radius: 50%; margin: 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 1.8rem; position: relative;
+        }
+        .pulse-box span { font-size: 0.7rem; opacity: 0.6; letter-spacing: 1px; }
+        .pulse-box.active { animation: neon 1.5s infinite alternate; border-color: var(--phys); color: var(--phys); }
+        .pulse-box.on-break { border-color: var(--break); color: var(--break); box-shadow: 0 0 20px var(--break); }
+
+        @keyframes neon { from { box-shadow: 0 0 10px var(--phys); } to { box-shadow: 0 0 30px var(--phys); } }
+
+        .mode-selector {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            background: #1a1d24; color: #777; padding: 10px; border-radius: 10px; 
+            font-size: 0.8rem; font-weight: bold; border: 1px solid transparent; cursor: pointer;
+        }
+        .mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,255,170,0.05); }
+
+        select, .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 800; cursor: pointer; }
+        select { background: #161a1f; color: white; margin-bottom: 15px; border: 1px solid #222; }
+        
+        .btn-start { background: var(--accent); color: #000; }
+        .btn-stop { background: var(--phys); color: white; margin-top: 10px; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .leader-row {
+            display: flex; justify-content: space-between; padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.9rem;
+        }
+        .is-me { color: var(--accent); background: rgba(0,255,170,0.05); border-radius: 8px; }
+
+        #popup {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .pop-card { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; border: 1px solid var(--accent); width: 80%; }
+    </style>
+</head>
+<body>
+
+<div id="popup">
+    <div class="pop-card">
+        <h2 id="popT">FOKUS BİTDİ</h2>
+        <p id="popMsg"></p>
+        <button class="btn" onclick="closePop()" style="background:white; color:black">DAVAM ET</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="warning-note">Özünü aldadaraq başqalarının haqqına girmə!</div>
+
+    <div class="glass">
+        <div class="streak-fire" id="streakDisplay">🔥 0 Günlük Seriya</div>
+        <div class="main-pts" id="totalP">0.0000</div>
+        <div id="subjects"></div>
+    </div>
+
+    <div class="glass">
+        <div class="mode-selector">
+            <button class="mode-btn active" id="modeNormal" onclick="setMode('normal')">NORMAL</button>
+            <button class="mode-btn" id="modePomodoro" onclick="setMode('pomodoro')">POMODORO (25m)</button>
+        </div>
+        
+        <select id="subS">
+            <option value="math">Riyaziyyat</option>
+            <option value="phys">Fizika</option>
+            <option value="lang">Azərbaycan Dili</option>
+            <option value="eng">İngilis Dili</option>
+            <option value="info">İnformatika</option>
+        </select>
+
+        <div class="pulse-box" id="pulse">
+            <div id="timerDisplay">00:00</div>
+            <span id="statusTxt">FOKUS</span>
+        </div>
+
+        <button id="sBtn" class="btn btn-start" onclick="startF()">BAŞLA</button>
+        <button id="eBtn" class="btn btn-stop" onclick="stopF()" disabled>BİTİR</button>
+    </div>
+
+    <div class="glass">
+        <h3 style="margin:0 0 15px 0; color:var(--accent); text-align: center;">🏆 Top 10 Liderlər</h3>
+        <div id="leaderList">Yüklənir...</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyC73WKcL9EY3EBW815vYWND_y2IVowVfT4",
+        authDomain: "ders-d485e.firebaseapp.com",
+        projectId: "ders-d485e",
+        storageBucket: "ders-d485e.firebasestorage.app",
+        messagingSenderId: "597294034826",
+        appId: "1:597294034826:web:495c8884e999575b35e273"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let userName = localStorage.getItem('ymfk_name') || "";
+    if(!userName) {
+        userName = prompt("Adınız:") || "Anonim";
+        localStorage.setItem('ymfk_name', userName);
+    }
+
+    const caps = { math: 250, phys: 150, lang: 100, eng: 100, info: 100 };
+    const colors = { math: 'var(--math)', phys: 'var(--phys)', lang: 'var(--lang)', eng: 'var(--eng)', info: 'var(--info)' };
+    
+    let timer, sec = 0, mode = 'normal', isBreak = false;
+    let localData = JSON.parse(localStorage.getItem('ymfk_v6')) || {
+        pts: { math: 0, phys: 0, lang: 0, eng: 0, info: 0 },
+        total: 0,
+        streak: 0,
+        lastDate: ""
+    };
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, dur) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = freq; gain.gain.value = 0.1;
+        osc.start(); setTimeout(() => osc.stop(), dur);
+    }
+
+    function checkStreak() {
+        const today = new Date().toDateString();
+        if(localData.lastDate === today) return;
+        
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        if(localData.lastDate === yesterday.toDateString()) {
+            localData.streak++;
+        } else {
+            localData.streak = 1;
+        }
+        localData.lastDate = today;
+        save();
+    }
+
+    function save() {
+        localStorage.setItem('ymfk_v6', JSON.stringify(localData));
+        render();
+    }
+
+    function render() {
+        let html = "";
+        for(let s in localData.pts) {
+            let p = (localData.pts[s]/caps[s]*100);
+            html += `<div class="sub-card">
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem"><span>${s.toUpperCase()}</span><span>${localData.pts[s].toFixed(4)}</span></div>
+                <div class="bar-out"><div class="bar-in" style="width:${p}%; background:${colors[s]}"></div></div>
+            </div>`;
+        }
+        document.getElementById('subjects').innerHTML = html;
+        document.getElementById('totalP').innerText = localData.total.toFixed(4);
+        document.getElementById('streakDisplay').innerText = `🔥 ${localData.streak} Günlük Seriya`;
+    }
+
+    window.setMode = (m) => {
+        if(timer) return;
+        mode = m;
+        document.getElementById('modeNormal').classList.toggle('active', m === 'normal');
+        document.getElementById('modePomodoro').classList.toggle('active', m === 'pomodoro');
+    };
+
+    window.startF = () => {
+        checkStreak();
+        document.getElementById('sBtn').disabled = true;
+        document.getElementById('eBtn').disabled = false;
+        document.getElementById('pulse').classList.add('active');
+        playBeep(440, 200);
+        
+        timer = setInterval(() => {
+            sec++;
+            document.getElementById('timerDisplay').innerText = new Date(sec * 1000).toISOString().substr(14, 5);
+            
+            if(mode === 'pomodoro' && sec >= 1500 && !isBreak) {
+                startBreak();
+            }
+        }, 1000);
+    };
+
+    function startBreak() {
+        isBreak = true;
+        sec = 0;
+        playBeep(880, 500);
+        document.getElementById('pulse').classList.add('on-break');
+        document.getElementById('statusTxt').innerText = "FASİLƏ";
+        document.getElementById('popMsg').innerText = "25 dəqiqə bitdi! 5 dəqiqə istirahət et.";
+        document.getElementById('popup').style.display = "flex";
+    }
+
+    window.stopF = async () => {
+        clearInterval(timer);
+        timer = null;
+        let s = document.getElementById('subS').value;
+        let earned = (sec / 3600) * 0.7;
+        
+        if(!isBreak) {
+            localData.pts[s] = Math.min(localData.pts[s] + earned, caps[s]);
+            let sum = 0; for(let k in localData.pts) sum += localData.pts[k];
+            localData.total = sum;
+            await setDoc(doc(db, "users", userName), { name: userName, total: localData.total, lastSeen: Date.now() }, { merge: true });
+        }
+
+        playBeep(660, 200);
+        save();
+        resetUI();
+    };
+
+    function resetUI() {
+        sec = 0; isBreak = false;
+        document.getElementById('timerDisplay').innerText = "00:00";
+        document.getElementById('sBtn').disabled = false;
+        document.getElementById('eBtn').disabled = true;
+        document.getElementById('pulse').className = "pulse-box";
+        document.getElementById('statusTxt').innerText = "FOKUS";
+    }
+
+    // Anti-Cheat: Tab dəyişəndə dayandır
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden && timer) {
+            stopF();
+            alert("Səhifədən çıxdığın üçün fokus dayandırıldı! Haqqına girmə.");
+        }
+    });
+
+    window.closePop = () => document.getElementById('popup').style.display = 'none';
+
+    const q = query(collection(db, "users"), orderBy("total", "desc"), limit(10));
+    onSnapshot(q, (snap) => {
+        let html = "";
+        snap.forEach((d) => {
+            let data = d.data();
+            html += `<div class="leader-row ${data.name === userName ? 'is-me' : ''}">
+                <span>${data.name}</span><span>${data.total.toFixed(4)}</span>
+            </div>`;
+        });
+        document.getElementById('leaderList').innerHTML = html;
+    });
+
+    render();
+</script>
+</body>
+</html>
